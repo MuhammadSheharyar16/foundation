@@ -156,3 +156,25 @@ python tiny_rag.py --question "What is the CEO salary?"
 - `model_demo.py` — three-bullet summary of `data/documents/DOC-002-...md` via `wrapper.chat`; prints sanitized metadata only, writes `artifacts/model_run.txt`.
 - `embedding_demo.py` — embeds S1/S2/S3 from `data/sample_questions.json`, ranks all three pairs by cosine similarity, confirms S1-S2 ranks above S1-S3, writes `artifacts/embedding_run.txt`.
 - `tiny_rag.py --question "..."` — retrieves the top two chunks from `data/chunks.json`, answers with citations or refuses with `INSUFFICIENT_EVIDENCE`; the two commands above are the mandatory pair and, run in that order (Q1 then Q2), leave `artifacts/supported_answer.json` and `artifacts/insufficient_evidence.json` holding their respective results. `tiny_rag.py` also accepts any other question, e.g. `--question "How much notice is needed to avoid a contract renewal?"` or `--question "What is the late payment interest rate?"`, but running one after Q1/Q2 will overwrite whichever of the two required artifact files shares its outcome status — re-run Q1/Q2 last if that happens.
+
+## Day 0B acceptance
+
+- [x] The model call succeeds through the supplied wrapper with sanitized metadata.
+- [x] S1-S2 ranks above S1-S3 in the embedding demonstration.
+- [x] The supported RAG answer cites only retrieved chunk IDs.
+- [x] A fabricated citation is rejected by a test.
+- [x] The unanswerable question returns insufficient evidence without citations.
+- [x] No agent framework, production data or committed credential is used.
+
+**EOD submission:** Open a PR containing the model, embedding and tiny RAG demos, tests, sanitized outputs and a one-paragraph explanation of retrieval versus generation.
+
+### EOD note: retrieval versus generation
+Retrieval and generation are two separate steps, and each has a different job.
+
+Retrieval finds the right information. In `tiny_rag.py`, the question and all chunks from data/`chunks.json` are compared using cosine similarity. The system then keeps only the top two chunks. This means the model can only use those two chunks as evidence.
+
+Generation takes that retrieved information and turns it into a clear answer. `wrapper.chat` receives only the selected chunks, along with their chunk IDs, and creates the response. The chunk IDs make it easy to know where each piece of information came from.
+
+After the answer is created, `validate_citations()` checks the citations. If the model uses a citation that was not part of the two retrieved chunks, the answer is rejected.
+
+If retrieval cannot find useful evidence, the model is not asked to guess. For example, if the question is **"What is the CEO salary?"** and there is no relevant information, the result is `INSUFFICIENT_EVIDENCE`. The same happens if a chunk talks about late payments but does not give the late payment interest rate.
