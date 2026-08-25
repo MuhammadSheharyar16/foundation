@@ -5,9 +5,8 @@ AICO architecture. The lab is a single-user, offline, single-lane exercise — i
 reimplement AICO, it stands in for a small slice of it. For each component below I say
 what plays that role here, and I'm explicit when nothing does and the component belongs
 to a later build day. The reasoning is backed by one real traced run of
-`python tiny_rag.py --question "What is the supplier delivery policy?"` (see
-`final-submission-guide.md` §5 Step 2 for the full 15-step trace) rather than guessed from
-the assignment brief.
+`python tiny_rag.py --question "What is the supplier delivery policy?"` (see the 15-step
+trace at the end of §2) rather than guessed from the assignment brief.
 
 ## 1. Component table
 
@@ -46,11 +45,58 @@ user (--question)
 ```
 
 I traced this against a real run of `python tiny_rag.py --question "What is the supplier
-delivery policy?"` step by step rather than assuming it from the diagram in the
-assignment brief — the printed console output only shows the very start (the question)
-and the very end (status/citations/answer); everything from Gate-A through Gate-D happens
-silently between those two printed points, which is exactly why several of the labels
-above say "not implemented" instead of "runs but isn't visible."
+delivery policy?"` step by step rather than assuming it from the diagram in the assignment
+brief — the printed console output only shows the very start (the question) and the very
+end (status/citations/answer); everything from Gate-A through Gate-D happens silently
+between those two printed points, which is exactly why several of the labels above say
+"not implemented" instead of "runs but isn't visible."
+
+### Traced run, step by step
+
+`tiny_rag.py`'s own `run()` only prints the question, then the final `status` /
+`retrieved_chunk_ids` / `citations` / `answer` — everything in between happens silently.
+To see it, the same functions `answer_question()` calls (`load_chunks`, `wrapper.embed`,
+`rank_chunks`, `_requires_quantified_evidence`, `build_evidence_prompt`, `wrapper.chat`,
+`parse_citations`, `validate_citations`) were called directly, in the same order, with a
+print after each one — no logic was changed, only observed. Every value below is
+copy-pasted from that real run, not reconstructed from reading the code.
+
+| # | Step | What happened | AICO mapping |
+|---|---|---|---|
+| 1 | Question received | `question = "What is the supplier delivery policy?"` | User and API entry |
+| 2 | Mode B loaded | `load_chunks()` reads `data/chunks.json` → 5 chunk IDs: `['C001', 'C002', 'C003', 'C004', 'C005']` | Mode B |
+| 3 | Question embedded | `wrapper.embed([question])` → `request_id=local-1dc1b157bbd2`, `model_alias=embed-local-deterministic-v1`, `dimensions=512`, `latency_ms=0.199` | Model Gateway |
+| 4 | Chunks embedded | `wrapper.embed(list(chunks.values()))` → `request_id=local-f7a36946f8b9`, same `model_alias`/`dimensions`, `latency_ms=2.176` | Model Gateway |
+| 5 | All 5 chunks ranked | `rank_chunks()` cosine-ranks every chunk against the question vector: `C002=0.2545, C001=0.2395, C004=0.2282, C005=0.1485, C003=0.0845` | retrieve Mode B |
+| 6 | Top 2 kept | `retrieved_chunk_ids = ['C002', 'C001']` (`_TOP_K = 2`) — C002 (late/notify) edges out C001 (base delivery window) because the question shares more content words with it | retrieve Mode B |
+| 7 | Zero-similarity guard | `top_score = 0.2545 > 1e-9` → not refused. (Compare: the CEO-salary question scores `0.0` here and is refused at this exact step — see `artifacts/insufficient_evidence.json`) | Gate-C |
+| 8 | Quantified-evidence guard | `_requires_quantified_evidence(question) = False` — the question contains none of `rate`/`percent`/`percentage`, so this guard doesn't apply (it exists for questions like "What is the late payment interest rate?") | Gate-C |
+| 9 | Evidence prompt assembled | `build_evidence_prompt()` tags every sentence of C002 then C001 with its chunk ID → 11 tagged sentences, starting `"[C002] If a vendor expects to miss the five working day window, it must notify Meridian in writing at least 48 hours before the agreed delivery date..."` | retrieve Mode B → Model Gateway boundary |
+| 10 | System prompt assembled | `_SYSTEM_INSTRUCTION` (the citation rule) + `"QUESTION: {question}"` concatenated → 390 characters, kept entirely separate from the evidence prompt | Mode A |
+| 11 | Model called | `wrapper.chat(evidence_prompt, system=system)` → `request_id=local-bd7fb244f1d4`, `model_alias=chat-local-deterministic-v1`, `latency_ms=0.378`, `prompt_tokens=217`, `completion_tokens=93` | Model Gateway |
+| 12 | Raw answer returned | Three `[Cxxx]`-tagged bullets, two from C002 and one from C001 (full text in `artifacts/supported_answer.json`) | Model Gateway output |
+| 13 | Citations parsed | `parse_citations()` extracts `['C002', 'C001']` from the raw answer text | Gate-D |
+| 14 | Citations validated | `validate_citations(['C002', 'C001'], ['C002', 'C001'])` → both survive, nothing dropped — every citation the model produced was actually retrieved | Gate-D |
+| 15 | Final result | `status = "ANSWERED"`, `citations = ['C002', 'C001']` — matches `artifacts/supported_answer.json` exactly | answer → audit |
+
+What this confirms:
+
+- **Gate-A / Lane Selector / Gate-B genuinely run nothing** — there's no step between #1
+  and #2 above where intent classification, lane choice, or a permission check could have
+  happened. This is first-hand confirmation of what the component table above claims about
+  those three rows, not an assumption from the sequence diagram.
+- **Gate-C is real but narrow** — steps #7 and #8 are actual guard checks with real
+  pass/fail outcomes, not decoration. Re-running this same trace for `"What is the CEO
+  salary?"` refuses at step #7 (`top_score = 0.0`); re-running it for `"What is the late
+  payment interest rate?"` passes step #7 but refuses at step #8. Both are covered by
+  `tests/test_tiny_rag.py`.
+- **Gate-D is a real, tested control, not a formality** — step #14 is a no-op here
+  because the model happened to behave, but `tests/test_tiny_rag.py::
+  test_fabricated_citation_is_rejected` exercises the case where it isn't a no-op (a
+  citation naming a chunk outside `retrieved_chunk_ids` gets dropped).
+- **Observability is a snapshot, not a log** — steps #3, #4, and #11 each mint their own
+  `request_id`; nothing here correlates them into one trace ID for the overall question,
+  which is exactly the Observability gap the component table above already calls out.
 
 ## 3. Why Mode A tells the system how to operate while Mode B provides what is true
 
