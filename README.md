@@ -57,14 +57,14 @@ Without activating (macOS/Linux):
 
 ### Where things live
 
-- [developer_profile.py](developer_profile.py) — `DeveloperProfile` model and `load_profile()` / `load_profiles()`, raising `ProfileValidationError` that names the invalid/missing field.
-- [python_bridge.py](python_bridge.py) — `EmbeddingProvider` Protocol, `DeterministicFakeEmbeddingProvider`, `WrapperEmbeddingProvider`, and the async `embed_async` function.
+- [python_bridge.py](python_bridge.py) — one module holding both lab pieces:
+  - `EmbeddingProvider` Protocol, `DeterministicFakeEmbeddingProvider`, `WrapperEmbeddingProvider`, and the async `embed_async` function.
+  - The `DeveloperProfile` model — with an `embedding_text()` method that turns a profile into the text fed to `EmbeddingProvider` in tests — plus `load_profile()` (one profile from a JSON object file) and `load_profiles_from_file()` (multiple profiles from one JSON array file, optionally by `indices`), raising `ProfileValidationError` that names the invalid/missing field.
 - [wrapper/config.py](wrapper/config.py) — `WrapperConfig` and `load_config()`, reading `MODEL_ENDPOINT`, `CHAT_MODEL_ALIAS`, `EMBEDDING_MODEL_ALIAS` (required) and `MODEL_TIMEOUT_S` (optional), raising `ConfigurationMissingError` that names the missing/invalid variable and never its value.
 - [wrapper/errors.py](wrapper/errors.py) — `ConfigurationMissingError`, `ModelTimeoutError`, `ModelCallError`.
 - [conftest.py](conftest.py) — empty on purpose; its presence puts the repo root on `sys.path` so `tests/*.py` can import the modules above no matter how pytest is invoked.
-- [data/profile_hamza.json](data/profile_hamza.json), [data/profile_sheharyar.json](data/profile_sheharyar.json) — valid `DeveloperProfile` fixtures. [data/profile_ali_invalid.json](data/profile_ali_invalid.json) — deliberately invalid (blank `current_role`, negative `experience_years`).
-- [tests/test_developer_profile.py](tests/test_developer_profile.py) — the pytest suite for `DeveloperProfile` and its loader.
-- [tests/test_python_bridge.py](tests/test_python_bridge.py) — the pytest suite for the `EmbeddingProvider`/async/config items above.
+- [data/profiles.json](data/profiles.json) — one JSON array with all three `DeveloperProfile` fixtures: `Hamza Khan` and `Muhammad Sheharyar` (valid), then `Ali Nadeem` (deliberately invalid — blank `current_role`, negative `experience_years`). Loaded via `load_profiles_from_file()`; the two valid profiles' text (via `embedding_text()`) is also the embedding input used in the `EmbeddingProvider`/async tests, in place of arbitrary sample sentences.
+- [tests/test_python_bridge.py](tests/test_python_bridge.py) — the pytest suite for the `EmbeddingProvider`/async/config items and `DeveloperProfile` above.
 
 ## 3. Write the concept baseline
 
