@@ -1,8 +1,8 @@
 source_document: DOC-002-contract-delivery-renewal-termination.md
 system_instruction: Summarize in exactly three bullets.
-request_id: local-2d48efe91732
+request_id: local-d044de35ec64
 model_alias: chat-local-deterministic-v1
-latency_ms: 0.47309999354183674
+latency_ms: 0.46529993414878845
 prompt_tokens: 475
 completion_tokens: 82
 
