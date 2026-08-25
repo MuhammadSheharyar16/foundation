@@ -20,6 +20,7 @@ from pathlib import Path
 
 import pytest
 
+from conftest import CHAT_MODEL_ALIAS, EMBEDDING_MODEL_ALIAS
 from python_bridge import (
     DeterministicFakeEmbeddingProvider,
     DeveloperProfile,
@@ -39,16 +40,9 @@ from wrapper import (
 
 _REQUIRED_ENV_VARS = ("MODEL_ENDPOINT", "CHAT_MODEL_ALIAS", "EMBEDDING_MODEL_ALIAS")
 
-
-def _set_required_env(monkeypatch) -> None:
-    """Populates all required wrapper config for chat()/embed() happy-path
-    tests. Values are placeholders -- there is no live endpoint; see
-    day0b-guide.md for why wrapper.chat/wrapper.embed are backed by a
-    deterministic local model instead."""
-    monkeypatch.setenv("MODEL_ENDPOINT", "local://deterministic")
-    monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-local-deterministic-v1")
-    monkeypatch.setenv("EMBEDDING_MODEL_ALIAS", "embed-local-deterministic-v1")
-
+# chat()/embed() happy-path tests below use the `deterministic_model_env`
+# fixture (conftest.py) instead of setting these env vars themselves -- one
+# definition, shared by every test file under tests/.
 
 PROFILES_FILE = Path(__file__).resolve().parent.parent / "data" / "profiles.json"
 
@@ -147,9 +141,7 @@ def test_load_config_returns_populated_config_with_valid_env_vars(monkeypatch) -
 # --- Day 0B: wrapper.chat / wrapper.embed (wrapper/model_client.py) --------
 
 
-def test_chat_returns_typed_result_with_sanitized_metadata(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
-
+def test_chat_returns_typed_result_with_sanitized_metadata(deterministic_model_env) -> None:
     result = chat(
         "Suppliers must deliver goods within five working days. "
         "Shipments are accepted at the receiving bay each weekday.",
@@ -167,13 +159,11 @@ def test_chat_returns_typed_result_with_sanitized_metadata(monkeypatch) -> None:
         "prompt_tokens",
         "completion_tokens",
     }
-    assert metadata["model_alias"] == "chat-local-deterministic-v1"
+    assert metadata["model_alias"] == CHAT_MODEL_ALIAS
     assert "text" not in metadata
 
 
-def test_embed_returns_typed_result_with_sanitized_metadata(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
-
+def test_embed_returns_typed_result_with_sanitized_metadata(deterministic_model_env) -> None:
     result = embed(["The supplier reported a vehicle engine problem."])
 
     assert isinstance(result, EmbeddingResult)
@@ -182,7 +172,7 @@ def test_embed_returns_typed_result_with_sanitized_metadata(monkeypatch) -> None
 
     metadata = result.sanitized_metadata()
     assert set(metadata) == {"request_id", "model_alias", "dimensions", "latency_ms"}
-    assert metadata["model_alias"] == "embed-local-deterministic-v1"
+    assert metadata["model_alias"] == EMBEDDING_MODEL_ALIAS
     assert "vectors" not in metadata
 
 
@@ -199,7 +189,7 @@ def test_chat_raises_configuration_missing_error_when_env_var_unset(monkeypatch)
 
 def test_embed_raises_configuration_missing_error_when_env_var_unset(monkeypatch) -> None:
     monkeypatch.delenv("EMBEDDING_MODEL_ALIAS", raising=False)
-    monkeypatch.setenv("MODEL_ENDPOINT", "local://deterministic")
+    monkeypatch.setenv("MODEL_ENDPOINT", "https://example.invalid/api")
     monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-default")
 
     with pytest.raises(ConfigurationMissingError) as excinfo:
@@ -208,9 +198,7 @@ def test_embed_raises_configuration_missing_error_when_env_var_unset(monkeypatch
     assert "EMBEDDING_MODEL_ALIAS" in str(excinfo.value)
 
 
-def test_chat_raises_timeout_error_when_budget_exceeded(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
-
+def test_chat_raises_timeout_error_when_budget_exceeded(deterministic_model_env) -> None:
     # A negative budget guarantees latency_ms (always >= 0) exceeds it,
     # regardless of the host machine's timer resolution -- avoids a flaky
     # timeout=0 test on a very fast run.
@@ -218,8 +206,6 @@ def test_chat_raises_timeout_error_when_budget_exceeded(monkeypatch) -> None:
         chat("Some text with a couple of sentences. Another one here.", timeout_s=-1)
 
 
-def test_embed_raises_timeout_error_when_budget_exceeded(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
-
+def test_embed_raises_timeout_error_when_budget_exceeded(deterministic_model_env) -> None:
     with pytest.raises(ModelTimeoutError):
         embed(["a", "b"], timeout_s=-1)

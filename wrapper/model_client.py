@@ -8,7 +8,7 @@ deterministic, network-free "model": `chat` extracts the most keyword-relevant
 sentences from the prompt as a bullet summary, and `embed` hashes words into a
 fixed-size bag-of-words vector. Same input always produces the same output,
 which is what makes this reproducible in tests and at the review gate without
-needing live model access. See `day0b-guide.md` for the reasoning.
+needing live model access.
 
 `python_bridge.DeterministicFakeEmbeddingProvider` calls back into
 `hash_embed_vector` below so the injectable test fake and this "real"

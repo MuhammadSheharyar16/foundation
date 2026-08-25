@@ -9,16 +9,11 @@ sanity check on the chunk fixture itself.
 
 from tiny_rag import answer_question, load_chunks, validate_citations
 
-
-def _set_required_env(monkeypatch) -> None:
-    monkeypatch.setenv("MODEL_ENDPOINT", "local://deterministic")
-    monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-local-deterministic-v1")
-    monkeypatch.setenv("EMBEDDING_MODEL_ALIAS", "embed-local-deterministic-v1")
+# `deterministic_model_env` (env var setup) is defined once in conftest.py
+# and shared by every test file under tests/ -- no local re-definition here.
 
 
-def test_supported_answer_cites_only_retrieved_chunk_ids(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
-
+def test_supported_answer_cites_only_retrieved_chunk_ids(deterministic_model_env) -> None:
     result = answer_question("What is the supplier delivery policy?")
 
     assert result.status == "ANSWERED"
@@ -27,9 +22,7 @@ def test_supported_answer_cites_only_retrieved_chunk_ids(monkeypatch) -> None:
     assert set(result.retrieved_chunk_ids) == {"C001", "C002"}
 
 
-def test_absent_question_returns_insufficient_evidence_with_no_citations(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
-
+def test_absent_question_returns_insufficient_evidence_with_no_citations(deterministic_model_env) -> None:
     result = answer_question("What is the CEO salary?")
 
     assert result.status == "INSUFFICIENT_EVIDENCE"

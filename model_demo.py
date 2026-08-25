@@ -5,7 +5,7 @@ summary through `wrapper.chat`, and demonstrates the safe-print/safe-error
 discipline required before Day 1.
 
 Only ever imports from `wrapper` — never `wrapper.model_client` directly and
-never an SDK. See day0b-guide.md for why `wrapper.chat` is currently backed
+never an SDK. So that's why `wrapper.chat` is currently backed
 by a deterministic local "model" rather than a live endpoint.
 
 Console output is sanitized metadata ONLY (request ID, model alias, latency,

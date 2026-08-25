@@ -58,9 +58,9 @@ _SYSTEM_INSTRUCTION = (
     "answer the question, say INSUFFICIENT_EVIDENCE and cite nothing."
 )
 
-# Narrow guard, not general numeric fact-checking -- see day0b-guide.md and
-# the module docstring above. Only fires for questions that specifically ask
-# for a rate/percentage.
+# Narrow guard, not general numeric fact-checking -- see the module
+# docstring above. Only fires for questions that specifically ask for a
+# rate/percentage.
 _QUANTIFIED_ANSWER_TRIGGER_WORDS = frozenset({"rate", "percent", "percentage"})
 _WORD_PATTERN = re.compile(r"[a-z]+")
 _CITATION_PATTERN = re.compile(r"\[([A-Za-z0-9]+)\]")

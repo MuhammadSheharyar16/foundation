@@ -4,15 +4,11 @@ that S1-S2 (same meaning, different words) ranks above S1-S3 (unrelated)."""
 from embedding_demo import _SENTENCE_IDS, _cosine_similarity, _load_sentences
 from wrapper import embed
 
-
-def _set_required_env(monkeypatch) -> None:
-    monkeypatch.setenv("MODEL_ENDPOINT", "local://deterministic")
-    monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-local-deterministic-v1")
-    monkeypatch.setenv("EMBEDDING_MODEL_ALIAS", "embed-local-deterministic-v1")
+# `deterministic_model_env` (env var setup) is defined once in conftest.py
+# and shared by every test file under tests/ -- no local re-definition here.
 
 
-def test_sim_s1_s2_ranks_above_sim_s1_s3(monkeypatch) -> None:
-    _set_required_env(monkeypatch)
+def test_sim_s1_s2_ranks_above_sim_s1_s3(deterministic_model_env) -> None:
     sentences = _load_sentences()
     texts = [sentences[sentence_id] for sentence_id in _SENTENCE_IDS]
 
