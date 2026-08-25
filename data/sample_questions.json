@@ -1,0 +1,59 @@
+{
+  "questions": [
+    {
+      "id": "Q1",
+      "question": "What is the supplier delivery policy?",
+      "expected_status": "ANSWERED",
+      "expected_chunk_ids": ["C001", "C002"],
+      "mandatory": true,
+      "note": "Answerable and spans two chunks. A developer who passes only the top chunk gives an incomplete answer."
+    },
+    {
+      "id": "Q2",
+      "question": "What is the CEO salary?",
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "expected_chunk_ids": [],
+      "mandatory": true,
+      "note": "Absent from the corpus and topically far from everything. Must return no answer and no citations."
+    },
+    {
+      "id": "Q3",
+      "question": "How much notice is needed to avoid a contract renewal?",
+      "expected_status": "ANSWERED",
+      "expected_chunk_ids": ["C003"],
+      "mandatory": false,
+      "note": "Single-chunk answer. Confirms retrieval does not always return the delivery chunks. Answer is 60 days; DOC-001 states 90 days but is superseded."
+    },
+    {
+      "id": "Q4",
+      "question": "What is the late payment interest rate?",
+      "expected_status": "INSUFFICIENT_EVIDENCE",
+      "expected_chunk_ids": [],
+      "mandatory": false,
+      "note": "The hard refusal. C004 retrieves strongly because it discusses payment and late payment, but states no rate. Catches a model that fills the gap."
+    }
+  ],
+  "embedding_sentences": [
+    { "id": "S1", "text": "The supplier reported a vehicle engine problem." },
+    { "id": "S2", "text": "The vendor has an issue with the car motor." },
+    { "id": "S3", "text": "The contract renewal date is next month." }
+  ],
+  "planted_for_later_days": {
+    "synonym_pairs": ["supplier/vendor", "delivery/shipment", "cost/price/charge", "terminate/cancel/end"],
+    "multi_chunk_fact": "Delivery policy spans C001 and C002.",
+    "near_miss_gap": "Late payment interest rate is discussed but never quantified (DOC-003 section 5).",
+    "conflict_and_staleness": "DOC-001 v2.0 states a 90-day non-renewal notice; DOC-002 v1.4 states 60 days and supersedes it.",
+    "restricted_content": "Named contacts, rate card contents, bank verification and sourcing scores are marked restricted in the documents."
+  },
+  "fixed_entities": {
+    "buyer": "Meridian Procurement Ltd",
+    "suppliers": [
+      "Nordvale Components Ltd",
+      "Brackenfield Logistics Ltd",
+      "Halvorsen Industrial Supply",
+      "Petronella Services Ltd"
+    ],
+    "contracts": ["CTR-2024-0117", "CTR-2025-0042", "CTR-2025-0088"],
+    "note": "Reuse these names when seeding the Mode B database so document evidence and database rows describe the same world."
+  }
+}
