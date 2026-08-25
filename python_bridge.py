@@ -13,15 +13,14 @@ further downstream.
 """
 
 import asyncio
-import hashlib
 import json
-import math
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Protocol
 
 from wrapper import EmbeddingResult
 from wrapper import embed as wrapper_embed
+from wrapper.model_client import _EMBEDDING_DIMENSIONS, hash_embed_vector
 
 
 class EmbeddingProvider(Protocol):
@@ -74,7 +73,7 @@ class DeterministicFakeEmbeddingProvider:
     model call.
     """
 
-    def __init__(self, dimensions: int = 16) -> None:
+    def __init__(self, dimensions: int = _EMBEDDING_DIMENSIONS) -> None:
         if dimensions <= 0:
             raise ValueError("dimensions must be a positive integer")
         self.dimensions = dimensions
@@ -100,18 +99,10 @@ class DeterministicFakeEmbeddingProvider:
         )
 
     def _embed_one(self, text: str) -> list[float]:
-        """Hash each word into a fixed-size bag-of-words vector, then normalize."""
-        vector = [0.0] * self.dimensions
-        words = text.lower().split()
-        for word in words:
-            digest = hashlib.sha256(word.encode("utf-8")).hexdigest()
-            index = int(digest, 16) % self.dimensions
-            vector[index] += 1.0
-
-        norm = math.sqrt(sum(component * component for component in vector))
-        if norm > 0:
-            vector = [component / norm for component in vector]
-        return vector
+        """Delegates to `wrapper.model_client.hash_embed_vector`, the one real
+        implementation of this hashing algorithm, so this fake and the real
+        `wrapper.embed` always agree on what "similar" means."""
+        return hash_embed_vector(text, self.dimensions)
 
 
 async def embed_async(

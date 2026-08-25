@@ -1,0 +1,10 @@
+{
+  "question": "What is the CEO salary?",
+  "status": "INSUFFICIENT_EVIDENCE",
+  "answer": "INSUFFICIENT_EVIDENCE",
+  "citations": [],
+  "retrieved_chunk_ids": [
+    "C001",
+    "C002"
+  ]
+}

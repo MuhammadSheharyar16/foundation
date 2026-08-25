@@ -1,0 +1,13 @@
+{
+  "question": "What is the supplier delivery policy?",
+  "status": "ANSWERED",
+  "answer": "- [C002] If a vendor expects to miss the five working day window, it must notify Meridian in writing at least 48 hours before the agreed delivery date, stating the revised date and the reason for the delay.\n- [C002] Repeated late delivery, meaning three or more late deliveries in any rolling 90-day period, triggers a formal performance review with the assigned category manager.\n- [C001] A delivery is complete only when the goods have been signed for by an authorised receiving officer and the delivery note reference has been recorded against the purchase order.",
+  "citations": [
+    "C002",
+    "C001"
+  ],
+  "retrieved_chunk_ids": [
+    "C002",
+    "C001"
+  ]
+}

@@ -31,7 +31,13 @@ class ChatResult:
 
         Must exclude `text`.
         """
-        raise NotImplementedError
+        return {
+            "request_id": self.request_id,
+            "model_alias": self.model_alias,
+            "latency_ms": self.latency_ms,
+            "prompt_tokens": self.prompt_tokens,
+            "completion_tokens": self.completion_tokens,
+        }
 
 
 @dataclass(frozen=True)
@@ -57,4 +63,9 @@ class EmbeddingResult:
 
         Must exclude `vectors`.
         """
-        raise NotImplementedError
+        return {
+            "request_id": self.request_id,
+            "model_alias": self.model_alias,
+            "dimensions": self.dimensions,
+            "latency_ms": self.latency_ms,
+        }
