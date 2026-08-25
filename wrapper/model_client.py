@@ -37,7 +37,18 @@ from .config import load_config
 from .errors import ModelCallError, ModelTimeoutError
 from .results import ChatResult, EmbeddingResult
 
-_EMBEDDING_DIMENSIONS = 16
+# Bucket count for hash_embed_vector. 16 was enough to separate the three
+# short S1/S2/S3 embedding-lab sentences (embedding_demo.py), but tiny_rag.py
+# embeds much longer, more varied chunk text, and at 16 buckets the collision
+# rate got bad enough to break retrieval: an irrelevant question ("What is
+# the CEO salary?") scored nearly as similar to every chunk (0.26-0.47) as
+# the genuinely relevant question did to its real match, and the delivery
+# question's top-ranked chunk was C004 (pricing/payment) instead of C001
+# (delivery obligations) -- pure collision noise, verified empirically before
+# raising this. 512 buckets removes that noise for this lab's chunk set: the
+# unrelated question drops to an exact 0.0000 against every chunk, and the
+# delivery question's top two chunks become exactly {C001, C002}.
+_EMBEDDING_DIMENSIONS = 512
 _MAX_SUMMARY_BULLETS = 3
 
 # Small closed-class words excluded from keyword scoring so summary sentences
@@ -94,6 +105,9 @@ def hash_embed_vector(text: str, dimensions: int) -> list[float]:
     Returns:
         A unit-length (or all-zero, if `text` has no non-stopword words) vector.
     """
+    if dimensions <= 0:
+        raise ValueError("dimensions must be a positive integer")
+
     vector = [0.0] * dimensions
     for word in _tokenize(text):
         if word in _STOPWORDS:

@@ -20,7 +20,7 @@ from typing import Protocol
 
 from wrapper import EmbeddingResult
 from wrapper import embed as wrapper_embed
-from wrapper.model_client import hash_embed_vector
+from wrapper.model_client import _EMBEDDING_DIMENSIONS, hash_embed_vector
 
 
 class EmbeddingProvider(Protocol):
@@ -73,7 +73,7 @@ class DeterministicFakeEmbeddingProvider:
     model call.
     """
 
-    def __init__(self, dimensions: int = 16) -> None:
+    def __init__(self, dimensions: int = _EMBEDDING_DIMENSIONS) -> None:
         if dimensions <= 0:
             raise ValueError("dimensions must be a positive integer")
         self.dimensions = dimensions
