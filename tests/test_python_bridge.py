@@ -1,14 +1,18 @@
 """Tests for the EmbeddingProvider protocol, its deterministic fake, the
-async embedding function, structured wrapper configuration, and the typed
-DeveloperProfile model and its JSON loader.
+async embedding function, structured wrapper configuration, wrapper.chat/
+wrapper.embed (Day 0B's model_client), and the typed DeveloperProfile model
+and its JSON loader.
 
-Eight pytest cases: the five required categories, plus three more that round
-out invalid-input and configuration coverage:
+Fourteen pytest cases: the five required Day 0A categories, three more that
+round out invalid-input and configuration coverage, and six for Day 0B's
+chat()/embed() (happy path with sanitized metadata, missing configuration,
+and timeout enforcement):
     - valid input
     - invalid input (from a file, directly on the model, and on the fake provider)
     - async behavior
     - injected fake
     - configuration (missing and valid)
+    - chat()/embed() happy path, configuration, and timeout (Day 0B)
 """
 
 import asyncio
@@ -23,9 +27,28 @@ from python_bridge import (
     embed_async,
     load_profiles_from_file,
 )
-from wrapper import ConfigurationMissingError, EmbeddingResult, load_config
+from wrapper import (
+    ChatResult,
+    ConfigurationMissingError,
+    EmbeddingResult,
+    ModelTimeoutError,
+    chat,
+    embed,
+    load_config,
+)
 
 _REQUIRED_ENV_VARS = ("MODEL_ENDPOINT", "CHAT_MODEL_ALIAS", "EMBEDDING_MODEL_ALIAS")
+
+
+def _set_required_env(monkeypatch) -> None:
+    """Populates all required wrapper config for chat()/embed() happy-path
+    tests. Values are placeholders -- there is no live endpoint; see
+    day0b-guide.md for why wrapper.chat/wrapper.embed are backed by a
+    deterministic local model instead."""
+    monkeypatch.setenv("MODEL_ENDPOINT", "local://deterministic")
+    monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-local-deterministic-v1")
+    monkeypatch.setenv("EMBEDDING_MODEL_ALIAS", "embed-local-deterministic-v1")
+
 
 PROFILES_FILE = Path(__file__).resolve().parent.parent / "data" / "profiles.json"
 
@@ -119,3 +142,84 @@ def test_load_config_returns_populated_config_with_valid_env_vars(monkeypatch) -
     assert config.chat_model_alias == "chat-default"
     assert config.embedding_model_alias == "embed-default"
     assert config.default_timeout_s == 30.0  # default, since MODEL_TIMEOUT_S was unset
+
+
+# --- Day 0B: wrapper.chat / wrapper.embed (wrapper/model_client.py) --------
+
+
+def test_chat_returns_typed_result_with_sanitized_metadata(monkeypatch) -> None:
+    _set_required_env(monkeypatch)
+
+    result = chat(
+        "Suppliers must deliver goods within five working days. "
+        "Shipments are accepted at the receiving bay each weekday.",
+        system="Summarize in exactly three bullets.",
+    )
+
+    assert isinstance(result, ChatResult)
+    assert result.text  # a non-empty summary was produced
+
+    metadata = result.sanitized_metadata()
+    assert set(metadata) == {
+        "request_id",
+        "model_alias",
+        "latency_ms",
+        "prompt_tokens",
+        "completion_tokens",
+    }
+    assert metadata["model_alias"] == "chat-local-deterministic-v1"
+    assert "text" not in metadata
+
+
+def test_embed_returns_typed_result_with_sanitized_metadata(monkeypatch) -> None:
+    _set_required_env(monkeypatch)
+
+    result = embed(["The supplier reported a vehicle engine problem."])
+
+    assert isinstance(result, EmbeddingResult)
+    assert len(result.vectors) == 1
+    assert len(result.vectors[0]) == result.dimensions
+
+    metadata = result.sanitized_metadata()
+    assert set(metadata) == {"request_id", "model_alias", "dimensions", "latency_ms"}
+    assert metadata["model_alias"] == "embed-local-deterministic-v1"
+    assert "vectors" not in metadata
+
+
+def test_chat_raises_configuration_missing_error_when_env_var_unset(monkeypatch) -> None:
+    monkeypatch.delenv("MODEL_ENDPOINT", raising=False)
+    monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-default")
+    monkeypatch.setenv("EMBEDDING_MODEL_ALIAS", "embed-default")
+
+    with pytest.raises(ConfigurationMissingError) as excinfo:
+        chat("hello")
+
+    assert "MODEL_ENDPOINT" in str(excinfo.value)
+
+
+def test_embed_raises_configuration_missing_error_when_env_var_unset(monkeypatch) -> None:
+    monkeypatch.delenv("EMBEDDING_MODEL_ALIAS", raising=False)
+    monkeypatch.setenv("MODEL_ENDPOINT", "local://deterministic")
+    monkeypatch.setenv("CHAT_MODEL_ALIAS", "chat-default")
+
+    with pytest.raises(ConfigurationMissingError) as excinfo:
+        embed(["hello"])
+
+    assert "EMBEDDING_MODEL_ALIAS" in str(excinfo.value)
+
+
+def test_chat_raises_timeout_error_when_budget_exceeded(monkeypatch) -> None:
+    _set_required_env(monkeypatch)
+
+    # A negative budget guarantees latency_ms (always >= 0) exceeds it,
+    # regardless of the host machine's timer resolution -- avoids a flaky
+    # timeout=0 test on a very fast run.
+    with pytest.raises(ModelTimeoutError):
+        chat("Some text with a couple of sentences. Another one here.", timeout_s=-1)
+
+
+def test_embed_raises_timeout_error_when_budget_exceeded(monkeypatch) -> None:
+    _set_required_env(monkeypatch)
+
+    with pytest.raises(ModelTimeoutError):
+        embed(["a", "b"], timeout_s=-1)
