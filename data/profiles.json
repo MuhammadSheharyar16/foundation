@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Hamza Khan",
+    "current_role": "Software Developer",
+    "experience_years": 5,
+    "target_ai_role": "AI Engineer"
+  },
+  {
+    "name": "Muhammad Sheharyar",
+    "current_role": ".NET Backend Developer",
+    "experience_years": 6.5,
+    "target_ai_role": "AI Platform Engineer"
+  },
+  {
+    "name": "Ali Nadeem",
+    "current_role": "   ",
+    "experience_years": -4,
+    "target_ai_role": "AI Engineer"
+  }
+]
