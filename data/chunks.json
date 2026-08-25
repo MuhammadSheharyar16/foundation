@@ -1,0 +1,37 @@
+{
+  "chunk_set_version": "1.0",
+  "source_note": "Synthetic data. No production, MOD, customer or personal data.",
+  "day_0_note": "Five chunks pulled from the three documents for the pre-sprint tiny RAG lab. From Day 1 the developer builds a chunker over the full documents folder and this file becomes a reference only.",
+  "chunks": [
+    {
+      "chunk_id": "C001",
+      "source_document": "DOC-002-contract-delivery-renewal-termination.md",
+      "section": "2. Delivery obligations",
+      "text": "Suppliers must deliver goods within five working days of a confirmed purchase order. Shipments are accepted at the Meridian receiving bay between 08:00 and 16:00, Monday to Friday. Deliveries outside these hours require written approval from Supply Chain Operations at least 24 hours in advance. A delivery is complete only when the goods have been signed for by an authorised receiving officer and the delivery note reference has been recorded against the purchase order. Shipments arriving without a valid purchase order number may be refused at the receiving bay."
+    },
+    {
+      "chunk_id": "C002",
+      "source_document": "DOC-002-contract-delivery-renewal-termination.md",
+      "section": "3. Late, partial and rejected deliveries",
+      "text": "If a vendor expects to miss the five working day window, it must notify Meridian in writing at least 48 hours before the agreed delivery date, stating the revised date and the reason for the delay. Partial shipments are permitted only where the purchase order explicitly allows them. Where a partial delivery is accepted, the outstanding balance must be delivered within a further three working days. Repeated late delivery, meaning three or more late deliveries in any rolling 90-day period, triggers a formal performance review with the assigned category manager. Goods arriving damaged, incomplete or outside specification are recorded as a rejection; replacement goods must be delivered within seven working days at the supplier's cost."
+    },
+    {
+      "chunk_id": "C003",
+      "source_document": "DOC-002-contract-delivery-renewal-termination.md",
+      "section": "4. Renewal and notice / 6. Termination",
+      "text": "Supplier contracts renew for a further twelve months unless either party gives written notice of non-renewal at least 60 days before the contract end date. Notice must be sent to the named commercial contact recorded in the contract schedule. Contracts with an annual value above GBP 250,000 require a documented renewal review before the notice deadline. Either party may terminate or cancel an agreement for convenience with 90 days written notice. Meridian may end an agreement immediately where a supplier enters insolvency proceedings, loses a mandatory certification, or commits a material breach that is not remedied within 30 days of written notice."
+    },
+    {
+      "chunk_id": "C004",
+      "source_document": "DOC-003-pricing-cost-payment-terms.md",
+      "section": "4. Invoicing / 5. Payment terms",
+      "text": "Invoices must quote the purchase order number, the contract reference, the delivery note reference and the cost components as agreed on the rate card. An invoice that cannot be matched to a receipted purchase order is rejected and returned within two working days. Approved invoices are paid 30 days from the date of receipt of a valid invoice. Payment is made by bank transfer to the account verified during onboarding. Changes to supplier bank details require verification by two Finance Operations staff members before any payment is released. Late payment may attract interest under applicable legislation. Meridian does not publish a contractual late payment rate in this policy."
+    },
+    {
+      "chunk_id": "C005",
+      "source_document": "DOC-001-supplier-selection-sourcing-policy.md",
+      "section": "2. Approved supplier list / 3. Evaluation criteria and scoring",
+      "text": "Only suppliers on the approved supplier list may receive a purchase order. The list is maintained by Category Management and reviewed every twelve months. Every sourcing option is scored against four weighted criteria: total cost at 40 percent, delivery reliability at 25 percent, technical compliance at 20 percent and financial stability at 15 percent. Each criterion is scored out of ten. A sourcing option scoring below six on total cost or below five on any other criterion is not shortlisted, regardless of its overall weighted total."
+    }
+  ]
+}
