@@ -2,6 +2,10 @@
 
 **Assignment objective:** Establish the vocabulary and Python mechanics needed to complete the AI build tasks without copying code blindly.
 
+### Repository history note
+
+This history was reorganized so the complete Day 0 submission — scaffold, Day 0A, Day 0B, and the AICO map — lives in one linear, reviewable pull request (5 commits, in build order: `scaffold`, `day0a`, `day0b`, `aico-map`, this note) instead of split across a direct-to-`main` scaffold commit plus separate PRs. No file content changed; only the commit graph was cleaned up so the full folder is reviewable in a single PR.
+
 ## 1. Configure and verify the environment
 
 | Action | Windows example | macOS/Linux example |
