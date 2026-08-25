@@ -2,6 +2,10 @@
 
 **Assignment objective:** Establish the vocabulary and Python mechanics needed to complete the AI build tasks without copying code blindly.
 
+### Repository history note
+
+The base commit (`feat(init): scaffold repo, wrapper boundary, and starter tests`) was pushed directly to `main` and is **not** part of PR #3. It carries the lead-provided `wrapper/` boundary, the starter test suite, `concepts.md`, and the synthetic `data/` fixtures — none of it authored as part of this submission. PR #3 (`submission/day0-foundation` → `main`, 3 commits: `day0a`, `day0b`, `aico-map`) contains the full, reviewable diff of everything built for Day 0A/0B.
+
 ## 1. Configure and verify the environment
 
 | Action | Windows example | macOS/Linux example |
